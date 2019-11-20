@@ -27,6 +27,29 @@ func init() {
 	})
 }
 
+func toRpcResult(value string) []byte {
+	return []byte(fmt.Sprintf("\"%s\"", value))
+}
+
+func fromRpcResult(value []byte) string {
+	return strings.Replace(string(value), "\"", "", -1)
+}
+
+func setLocalTxCount(address string, value uint64) {
+	_, err := RedisClient.Set(address, fmt.Sprint(value), 0).Result()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func parseUint(value string) uint64 {
+	result, err := strconv.ParseUint(value, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}
+
 func GetSenderAddress(rawTx string) string {
 	// Decode Raw Transaction for get
 	// Sender Address
@@ -52,29 +75,14 @@ func GetSenderAddress(rawTx string) string {
 	return msg.From().Hex()
 }
 
-func setLocalTxCount(address string, value uint64) {
-	_, err := RedisClient.Set(address, fmt.Sprint(value), 0).Result()
-	if err != nil {
-		panic(err)
-	}
-}
-
-func parseUint(value string) uint64 {
-	result, err := strconv.ParseUint(value, 10, 64)
-	if err != nil {
-		panic(err)
-	}
-	return result
-}
-
-func GetTransactionCount(address string, origResult []byte) string {
+func GetTransactionCount(address string, origResult string) string {
 	// Own method for overwrite
 	// JsonRPC method GetTransactionCount
 	var val string
 	var localValue uint64
 	var origValue uint64
 
-	origValue, err := hexutil.DecodeUint64(string(origResult))
+	origValue, err := hexutil.DecodeUint64(origResult)
 	if err != nil {
 		panic(err)
 	}
@@ -117,15 +125,17 @@ func RpcCall(req Request) Response {
 }
 
 func rpcGetTransactionCount(address string) uint64 {
+	paramsData, _ := json.Marshal(Params{address, "latest"})
+
 	var req = Request{
 		JsonRpc: "jsonrpc",
 		Id:      1,
 		Method:  "eth_getTransactionCount",
-		Params:  []byte(fmt.Sprintf("[\"%s\"]", address)),
+		Params:  paramsData,
 	}
 	resp := RpcCall(req)
 
-	result, err := hexutil.DecodeUint64(strings.Replace(string(resp.Result), "\"", "", -1))
+	result, err := hexutil.DecodeUint64(fromRpcResult(resp.Result))
 	if err != nil {
 		panic(err)
 	}
@@ -154,15 +164,15 @@ func SendRawTransaction(rawTx string) {
 }
 
 func HandleResponse(req Request, resp Response) Response {
-	var result []byte
 	var params Params
 
 	switch method := req.Method; method {
 	case "eth_getTransactionCount":
 		// Overwrite getTransactionCount result
 		json.NewDecoder(bytes.NewBuffer(req.Params)).Decode(&params)
-		result = []byte(fmt.Sprintf("\"%s\"", GetTransactionCount(params[0], []byte(strings.Replace(string(resp.Result), "\"", "", -1)))))
-		resp.Result = result
+		if params[1] == "latest" {
+			resp.Result = toRpcResult(GetTransactionCount(params[0], fromRpcResult(resp.Result)))
+		}
 	case "eth_sendRawTransaction":
 		// Handle sendRawTransaction request for
 		// increment local transactions counter
