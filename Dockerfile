@@ -15,12 +15,12 @@ RUN go get -d -v .
 
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/geth-lb
 RUN chmod 755 /go/bin/geth-lb
-#
-#############################
-## STEP 2 build a small image
-#############################
-#FROM scratch
-#
-#COPY --from=builder /go/bin/geth-lb /go/bin/geth-lb
-#
-#CMD ["/go/bin/geth-lb"]
+
+############################
+# STEP 2 build a small image
+############################
+FROM scratch
+
+COPY --from=builder /go/bin/geth-lb /go/bin/geth-lb
+
+CMD ["/go/bin/geth-lb"]

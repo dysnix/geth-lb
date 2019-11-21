@@ -8,9 +8,12 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strconv"
 )
 
-const ListenPort = 8545
+const ListenPortDefault = "8545"
+
+var ListenPort string
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	var req eth.Request
@@ -35,8 +38,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	ListenPort = eth.GetEnvOrDefault("LISTEN_PORT", ListenPortDefault)
+	ListenPortInt, err := strconv.ParseInt(ListenPort, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
 	http.HandleFunc("/", handler)
 
-	log.Printf("geth-lb starts on proxy %d", ListenPort)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", ListenPort), nil))
+	log.Printf("geth-lb starts on proxy %d", ListenPortInt)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", ListenPortInt), nil))
 }

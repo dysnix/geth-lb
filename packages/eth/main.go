@@ -17,39 +17,38 @@ import (
 	"time"
 )
 
-const BackendUrlDefault = "https://rpc-staging.public.test.k8s.2key.net"
-const RedisAddressDefault = "redis:6379"
-const RedisPasswordDefault = ""
 const RedisDatabaseDefault = "0"
 const RawTxCacheExpireTime = 60 * 60 * 24 * 30
 
 var BackendUrl string
 var RedisAddress string
-var RedisPassword string
 var RedisDatabase string
 var RedisClient *redis.Client
 
 func init() {
-	BackendUrl = getEnvOrDefault("BACKEND_URL", BackendUrlDefault)
-	RedisAddress = getEnvOrDefault("REDIS_ADDRESS", RedisAddressDefault)
-	RedisPassword = getEnvOrDefault("REDIS_PASSWORD", RedisPasswordDefault)
-	RedisDatabase = getEnvOrDefault("REDIS_DATABASE", RedisDatabaseDefault)
+	BackendUrl = GetEnvOrDefault("BACKEND_URL", "")
+	RedisAddress = GetEnvOrDefault("REDIS_ADDRESS", "")
+	RedisDatabase = GetEnvOrDefault("REDIS_DATABASE", RedisDatabaseDefault)
 	RedisDatabaseInt, err := strconv.ParseInt(RedisDatabase, 10, 64)
 	if err != nil {
 		panic(err)
 	}
 
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     RedisAddress,
-		Password: RedisPassword,
-		DB:       int(RedisDatabaseInt), // use default DB
+		Addr: RedisAddress,
+		DB:   int(RedisDatabaseInt), // use default DB
 	})
 }
 
-func getEnvOrDefault(key string, defValue string) string {
+func GetEnvOrDefault(key string, defValue string) string {
 	var value string
 
 	value = os.Getenv(key)
+
+	if value == "" && defValue == "" {
+		log.Panicf("Please set env variable \"%s\"", key)
+	}
+
 	if value == "" {
 		return defValue
 	}

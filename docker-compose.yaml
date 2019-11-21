@@ -12,6 +12,12 @@ services:
       context: .
     ports:
     - "8545:8545"
+    environment:
+      LISTEN_PORT: "8545"
+      BACKEND_URL: "https://rpc-staging.public.test.k8s.2key.net"
+      REDIS_ADDRESS: "redis:6379"
+      REDIS_PASSWORD: ""
+      REDIS_DATABASE: "0"
     volumes:
     - ./:/go/src/geth-lb
     links:
