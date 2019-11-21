@@ -11,20 +11,50 @@ import (
 	"github.com/go-redis/redis"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
-const BackendUrl = "https://rpc-staging.public.test.k8s.2key.net"
+const BackendUrlDefault = "https://rpc-staging.public.test.k8s.2key.net"
+const RedisAddressDefault = "redis:6379"
+const RedisPasswordDefault = ""
+const RedisDatabaseDefault = "0"
+const RawTxCacheExpireTime = 60 * 60 * 24 * 30
 
+var BackendUrl string
+var RedisAddress string
+var RedisPassword string
+var RedisDatabase string
 var RedisClient *redis.Client
 
 func init() {
+	BackendUrl = getEnvOrDefault("BACKEND_URL", BackendUrlDefault)
+	RedisAddress = getEnvOrDefault("REDIS_ADDRESS", RedisAddressDefault)
+	RedisPassword = getEnvOrDefault("REDIS_PASSWORD", RedisPasswordDefault)
+	RedisDatabase = getEnvOrDefault("REDIS_DATABASE", RedisDatabaseDefault)
+	RedisDatabaseInt, err := strconv.ParseInt(RedisDatabase, 10, 64)
+	if err != nil {
+		panic(err)
+	}
+
 	RedisClient = redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Addr:     RedisAddress,
+		Password: RedisPassword,
+		DB:       int(RedisDatabaseInt), // use default DB
 	})
+}
+
+func getEnvOrDefault(key string, defValue string) string {
+	var value string
+
+	value = os.Getenv(key)
+	if value == "" {
+		return defValue
+	}
+
+	return value
 }
 
 func toRpcResult(value string) []byte {
@@ -143,6 +173,19 @@ func rpcGetTransactionCount(address string) uint64 {
 	return result
 }
 
+func isRawTxExist(rawTx string) bool {
+	val, _ := RedisClient.Get(rawTx).Result()
+	if val == "" {
+		_, err := RedisClient.Set(rawTx, "exist", time.Second*RawTxCacheExpireTime).Result()
+		if err != nil {
+			log.Panicln(err)
+		}
+		return false
+	} else {
+		return true
+	}
+}
+
 func SendRawTransaction(rawTx string) {
 	// Own method for handle SendRawTransaction
 	// JsonRPC method and increment local counter
@@ -157,9 +200,11 @@ func SendRawTransaction(rawTx string) {
 		setLocalTxCount(senderAddress, origValue)
 	}
 
-	_, err = RedisClient.Incr(senderAddress).Result()
-	if err != nil {
-		panic(err)
+	if !isRawTxExist(rawTx) {
+		_, err = RedisClient.Incr(senderAddress).Result()
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
