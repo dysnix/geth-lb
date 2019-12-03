@@ -154,7 +154,7 @@ func RpcCall(req Request) Response {
 }
 
 func rpcGetTransactionCount(address string) uint64 {
-	paramsData, _ := json.Marshal(Params{address, "latest"})
+	paramsData, _ := json.Marshal(Params{address, "pending"})
 
 	var req = Request{
 		JsonRpc: "jsonrpc",
@@ -214,7 +214,7 @@ func HandleResponse(req Request, resp Response) Response {
 	case "eth_getTransactionCount":
 		// Overwrite getTransactionCount result
 		json.NewDecoder(bytes.NewBuffer(req.Params)).Decode(&params)
-		if params[1] == "latest" {
+		if params[1] == "pending" {
 			resp.Result = toRpcResult(GetTransactionCount(params[0], fromRpcResult(resp.Result)))
 		}
 	case "eth_sendRawTransaction":
