@@ -11,6 +11,7 @@ ADD . /go/src/geth-lb
 WORKDIR /go/src/geth-lb/server
 
 # Install dep
+RUN go get github.com/btcsuite/btcd/btcec
 RUN go get -d -v .
 
 RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /go/bin/geth-lb
