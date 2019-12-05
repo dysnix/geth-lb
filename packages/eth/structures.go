@@ -6,13 +6,13 @@ type Params []string
 
 type Request struct {
 	JsonRpc string          `json:"jsonrpc"`
-	Id      int32           `json:"id"`
+	Id      uint64          `json:"id"`
 	Method  string          `json:"method"`
 	Params  json.RawMessage `json:"params"`
 }
 
 type Response struct {
 	JsonRpc string          `json:"jsonrpc"`
-	Id      int32           `json:"id"`
+	Id      uint64          `json:"id"`
 	Result  json.RawMessage `json:"result"`
 }
