@@ -136,7 +136,6 @@ func RpcCall(req Request) Response {
 	var resp Response
 
 	reqData, err := json.Marshal(req)
-	log.Println(string(reqData))
 	proxyResponseData, err := http.Post(BackendUrl, "application/json", bytes.NewBuffer(reqData))
 	if err != nil {
 		log.Panic(err)
