@@ -111,6 +111,8 @@ func GetTransactionCount(address string, origResult string) string {
 	var localValue uint64
 	var origValue uint64
 
+	address = strings.ToLower(address)
+
 	origValue, err := hexutil.DecodeUint64(origResult)
 	if err != nil {
 		panic(err)
@@ -192,6 +194,8 @@ func SendRawTransaction(rawTx string) {
 	log.Printf("Sender address: %s", senderAddress)
 
 	origValue := rpcGetTransactionCount(senderAddress)
+
+	senderAddress = strings.ToLower(senderAddress)
 
 	val, err := RedisClient.Get(senderAddress).Result()
 	if err == nil && origValue > parseUint(val) {
