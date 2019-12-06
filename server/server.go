@@ -22,7 +22,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Printf("Error decode request: %s", err)
+		log.Printf("Error decode request: %s. Request: %s", err, r.Body)
 		http.Error(w, err.Error(), 400)
 		return
 	}
