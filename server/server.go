@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
 )
 
@@ -22,7 +23,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// Parse request
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		log.Printf("Error decode request: %s. Request: %s", err, r.Body)
+		requestDump, err := httputil.DumpRequest(r, true)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(string(requestDump))
+
 		http.Error(w, err.Error(), 400)
 		return
 	}
