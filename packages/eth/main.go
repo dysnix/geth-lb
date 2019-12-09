@@ -228,7 +228,7 @@ func HandleResponse(req Request, resp Response) Response {
 	}
 
 	// Debug logging
-	reqData, _ := json.Marshal(resp)
+	reqData, _ := json.Marshal(req)
 	respData, _ := json.Marshal(resp)
 	log.Printf("> Request: %s", string(reqData))
 	log.Printf("< Response: %s", string(respData))
