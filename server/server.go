@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"geth-lb/packages/eth"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -21,15 +22,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	var resp eth.Response
 
 	// Parse request
-	err := json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
+	errDecode := json.NewDecoder(r.Body).Decode(&req)
+	if errDecode != nil {
 		requestDump, err := httputil.DumpRequest(r, true)
 		if err != nil {
 			fmt.Println(err)
 		}
 		fmt.Println(string(requestDump))
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("%s", b)
 
-		http.Error(w, err.Error(), 400)
+		http.Error(w, errDecode.Error(), 400)
 		return
 	}
 
