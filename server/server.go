@@ -46,6 +46,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	resp = eth.HandleResponse(req, resp)
 
 	respData, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatal(err)
+	}
 	io.Copy(w, bytes.NewBuffer(respData))
 }
 
