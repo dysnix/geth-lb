@@ -2,8 +2,6 @@ package eth
 
 import "encoding/json"
 
-type Params []string
-
 type Request struct {
 	JsonRpc string          `json:"jsonrpc"`
 	Id      uint64          `json:"id"`
@@ -16,3 +14,7 @@ type Response struct {
 	Id      uint64          `json:"id"`
 	Result  json.RawMessage `json:"result"`
 }
+
+type Params []string
+type RequestsBath []Request
+type ResponsesBath []Response
